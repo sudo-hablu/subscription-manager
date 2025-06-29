@@ -1,29 +1,47 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Search, Plus, ChevronLeft, Bell } from 'lucide-react-native';
 import GradientBackground from '@/components/ui/GradientBackground';
-import SubscriptionCard from '@/components/subscription/SubscriptionCard';
+import SwipeableSubscriptionCard from '@/components/subscription/SwipeableSubscriptionCard';
 import { mockSubscriptions } from '@/data/mockData';
 import { Subscription } from '@/types/subscription';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [searchText, setSearchText] = useState('');
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>(mockSubscriptions);
   const [filteredSubscriptions, setFilteredSubscriptions] = useState<Subscription[]>(mockSubscriptions);
 
   const handleSearch = (text: string) => {
     setSearchText(text);
     if (text.trim() === '') {
-      setFilteredSubscriptions(mockSubscriptions);
+      setFilteredSubscriptions(subscriptions);
     } else {
-      const filtered = mockSubscriptions.filter(sub =>
+      const filtered = subscriptions.filter(sub =>
         sub.name.toLowerCase().includes(text.toLowerCase())
       );
       setFilteredSubscriptions(filtered);
     }
   };
 
-  const totalMonthlyExpense = mockSubscriptions.reduce((total, sub) => {
+  const handleDelete = (id: string) => {
+    const updatedSubscriptions = subscriptions.filter(sub => sub.id !== id);
+    setSubscriptions(updatedSubscriptions);
+    
+    // Update filtered list as well
+    if (searchText.trim() === '') {
+      setFilteredSubscriptions(updatedSubscriptions);
+    } else {
+      const filtered = updatedSubscriptions.filter(sub =>
+        sub.name.toLowerCase().includes(searchText.toLowerCase())
+      );
+      setFilteredSubscriptions(filtered);
+    }
+  };
+
+  const totalMonthlyExpense = subscriptions.reduce((total, sub) => {
     if (sub.currency === '₦') {
       return total + sub.amount;
     }
@@ -72,19 +90,32 @@ export default function HomeScreen() {
           {/* Subscriptions List */}
           <View style={styles.subscriptionsList}>
             {filteredSubscriptions.map((subscription) => (
-              <SubscriptionCard
+              <SwipeableSubscriptionCard
                 key={subscription.id}
                 subscription={subscription}
-                onPress={() => {
-                  // Navigate to subscription details
-                }}
+                onPress={() => router.push(`/subscription/${subscription.id}`)}
+                onDelete={handleDelete}
               />
             ))}
+            
+            {filteredSubscriptions.length === 0 && (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>
+                  {searchText ? 'No subscriptions found' : 'No subscriptions yet'}
+                </Text>
+                <Text style={styles.emptyStateSubtext}>
+                  {searchText ? 'Try a different search term' : 'Add your first subscription to get started'}
+                </Text>
+              </View>
+            )}
           </View>
         </ScrollView>
 
         {/* Floating Action Button */}
-        <TouchableOpacity style={styles.fab}>
+        <TouchableOpacity 
+          style={styles.fab}
+          onPress={() => router.push('/subscription/add')}
+        >
           <Plus size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </SafeAreaView>
@@ -163,6 +194,21 @@ const styles = StyleSheet.create({
   },
   subscriptionsList: {
     paddingBottom: 100,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 8,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
   },
   fab: {
     position: 'absolute',

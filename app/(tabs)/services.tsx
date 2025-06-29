@@ -1,19 +1,28 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Filter, Plus } from 'lucide-react-native';
 import GradientBackground from '@/components/ui/GradientBackground';
-import SubscriptionCard from '@/components/subscription/SubscriptionCard';
+import SwipeableSubscriptionCard from '@/components/subscription/SwipeableSubscriptionCard';
 import { mockSubscriptions } from '@/data/mockData';
+import { Subscription } from '@/types/subscription';
 
 export default function ServicesScreen() {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>(mockSubscriptions);
   
   const categories = ['All', 'Entertainment', 'Productivity', 'Health', 'Education', 'Social'];
   
   const filteredSubscriptions = selectedCategory === 'All' 
-    ? mockSubscriptions 
-    : mockSubscriptions.filter(sub => sub.category === selectedCategory);
+    ? subscriptions 
+    : subscriptions.filter(sub => sub.category === selectedCategory);
+
+  const handleDelete = (id: string) => {
+    const updatedSubscriptions = subscriptions.filter(sub => sub.id !== id);
+    setSubscriptions(updatedSubscriptions);
+  };
 
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: string } = {
@@ -109,19 +118,28 @@ export default function ServicesScreen() {
           {/* Services List */}
           <View style={styles.servicesList}>
             {filteredSubscriptions.map((subscription) => (
-              <SubscriptionCard
+              <SwipeableSubscriptionCard
                 key={subscription.id}
                 subscription={subscription}
-                onPress={() => {
-                  // Navigate to subscription details
-                }}
+                onPress={() => router.push(`/subscription/${subscription.id}`)}
+                onDelete={handleDelete}
               />
             ))}
+            
+            {filteredSubscriptions.length === 0 && (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>No {selectedCategory.toLowerCase()} subscriptions</Text>
+                <Text style={styles.emptyStateSubtext}>Add a subscription to get started</Text>
+              </View>
+            )}
           </View>
         </ScrollView>
 
         {/* Floating Action Button */}
-        <TouchableOpacity style={styles.fab}>
+        <TouchableOpacity 
+          style={styles.fab}
+          onPress={() => router.push('/subscription/add')}
+        >
           <Plus size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </SafeAreaView>
@@ -215,6 +233,21 @@ const styles = StyleSheet.create({
   },
   servicesList: {
     paddingBottom: 100,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 8,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
   },
   fab: {
     position: 'absolute',
