@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Edit3, Trash2, Calendar, CreditCard, Bell, Tag } from 'lucide-react-native';
+import { ArrowLeft, CreditCard as Edit3, Trash2, Calendar, CreditCard, Bell, Tag } from 'lucide-react-native';
 import GradientBackground from '@/components/ui/GradientBackground';
 import Card from '@/components/ui/Card';
 import { mockSubscriptions } from '@/data/mockData';
